@@ -8,11 +8,23 @@ import OutputDisplay from './components/OutputDisplay';
 import ContentTemplates from './components/ContentTemplates';
 import BrandAnalyzer from './components/BrandAnalyzer';
 import HistoryPanel, { HistoryItem } from './components/HistoryPanel';
+import LandingPage from './components/LandingPage';
+import AuthModal from './components/AuthModal';
 
 type MainView = 'generator' | 'auditor';
 type GeneratorOutputView = 'output' | 'history';
 
+interface User {
+  name: string;
+  email: string;
+}
+
 const App: React.FC = () => {
+  // Navigation & Auth State
+  const [showLanding, setShowLanding] = useState<boolean>(true);
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
+
   // Main view state
   const [activeMainView, setActiveMainView] = useState<MainView>('generator');
 
@@ -34,7 +46,18 @@ const App: React.FC = () => {
   const [isAuditing, setIsAuditing] = useState<boolean>(false);
   const [auditError, setAuditError] = useState<string | null>(null);
 
+  // Check for persisted user
   useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('brandmeld_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setShowLanding(false);
+      }
+    } catch (e) {
+      console.error("Failed to parse user from localStorage", e);
+    }
+
     try {
       const storedHistory = localStorage.getItem('brandmeld_history');
       if (storedHistory) {
@@ -45,6 +68,24 @@ const App: React.FC = () => {
       localStorage.removeItem('brandmeld_history');
     }
   }, []);
+
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('brandmeld_user', JSON.stringify(userData));
+    setShowAuthModal(false);
+    setShowLanding(false);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('brandmeld_user');
+    setShowLanding(true);
+    // Optional: Clear confidential state on logout
+    setBrandVoice('');
+    setGeneratedContent('');
+    setHistory([]);
+    localStorage.removeItem('brandmeld_history');
+  };
 
   const handleGenerate = useCallback(async () => {
     if (!brandVoice.trim() || !contentRequest.trim()) {
@@ -84,7 +125,6 @@ const App: React.FC = () => {
     try {
       const result = await auditContent(auditBrandVoice, contentToAudit);
       setAuditResult(result);
-    // FIX: Corrected syntax for the catch block.
     } catch (err) {
       setAuditError(err instanceof Error ? err.message : 'An unknown error occurred.');
     } finally {
@@ -128,148 +168,162 @@ const App: React.FC = () => {
   const TabButton: React.FC<{view: MainView, label: string}> = ({ view, label }) => (
     <button 
       onClick={() => setActiveMainView(view)}
-      className={`px-6 py-3 text-xl font-bold rounded-t-lg transition-colors duration-200 ${activeMainView === view ? 'bg-slate-800/60 text-teal-400' : 'bg-transparent text-slate-400 hover:bg-slate-800/30 hover:text-slate-200'}`}
+      className={`px-6 py-3 text-lg font-bold rounded-t-lg transition-colors duration-200 ${activeMainView === view ? 'bg-slate-800/80 text-teal-400 border-t border-x border-slate-700/50' : 'bg-transparent text-slate-500 hover:bg-slate-800/30 hover:text-slate-200'}`}
     >
       {label}
     </button>
   );
 
   return (
-    <div className="min-h-screen text-slate-200 font-sans p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <Header />
+    <div className="min-h-screen text-slate-200 font-sans selection:bg-teal-500/30 bg-slate-950">
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleLogin}
+      />
 
-        <div className="mt-10 lg:mt-12 border-b border-slate-700">
-          <TabButton view="generator" label="Content Generator" />
-          <TabButton view="auditor" label="Voice Auditor" />
-        </div>
-        
-        {activeMainView === 'generator' && (
-          <main className="mt-10 animate-fade-in">
-            <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16">
-              <div className="flex flex-col">
-                <BrandAnalyzer
-                  value={analyzeUrl}
-                  onChange={(e) => setAnalyzeUrl(e.target.value)}
-                  onAnalyze={handleAnalyze}
-                  disabled={isGenerating}
-                  isAnalyzing={isAnalyzing}
-                />
-                <div className="mt-10">
-                  <TextInput
-                    id="brand_voice_input"
-                    label="1. Define Your Brand Voice"
-                    placeholder="e.g., Playful and witty..."
-                    value={brandVoice}
-                    onChange={(e) => setBrandVoice(e.target.value)}
-                    rows={6}
-                    disabled={isGenerating || isAnalyzing}
-                  />
-                </div>
-                <div className="mt-8">
-                  <ContentTemplates onTemplateSelect={handleTemplateSelect} disabled={isGenerating} />
-                </div>
-                <div className="mt-8">
-                  <TextInput
-                    id="content_request_input"
-                    label="3. Your Request"
-                    placeholder="e.g., A short Instagram post..."
-                    value={contentRequest}
-                    onChange={(e) => setContentRequest(e.target.value)}
-                    rows={6}
+      {showLanding ? (
+        <LandingPage onLoginClick={() => setShowAuthModal(true)} />
+      ) : (
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 animate-fade-in">
+          <Header user={user} onLogout={handleLogout} />
+
+          <div className="mt-10 lg:mt-12 border-b border-slate-800 flex space-x-2">
+            <TabButton view="generator" label="Content Creator" />
+            <TabButton view="auditor" label="Voice Auditor" />
+          </div>
+          
+          {activeMainView === 'generator' && (
+            <main className="mt-8 animate-fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-12 gap-8">
+                <div className="flex flex-col space-y-8">
+                  <BrandAnalyzer
+                    value={analyzeUrl}
+                    onChange={(e) => setAnalyzeUrl(e.target.value)}
+                    onAnalyze={handleAnalyze}
                     disabled={isGenerating}
+                    isAnalyzing={isAnalyzing}
                   />
-                </div>
-                <div className="mt-12">
-                  <GenerateButton
-                    onClick={handleGenerate}
-                    isLoading={isGenerating}
-                    disabled={!brandVoice || !contentRequest || isAnalyzing}
-                  >
-                    Meld Content
-                  </GenerateButton>
-                </div>
-              </div>
-
-              <div className="mt-12 lg:mt-0">
-                <div className="flex border-b border-slate-700 mb-4">
-                    <button onClick={() => setActiveGeneratorView('output')} className={`px-4 py-2 text-lg font-semibold transition-colors duration-200 ${activeGeneratorView === 'output' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-slate-200'}`}>
-                      Output
-                    </button>
-                    <button onClick={() => setActiveGeneratorView('history')} className={`px-4 py-2 text-lg font-semibold transition-colors duration-200 ${activeGeneratorView === 'history' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-slate-200'}`}>
-                      History
-                    </button>
-                </div>
-                {activeGeneratorView === 'output' && (
-                    <OutputDisplay
-                      isLoading={isGenerating}
-                      error={generatorError}
-                      content={generatedContent}
-                      onRetry={handleGenerate}
-                      title="Generated Content"
-                    />
-                )}
-                {activeGeneratorView === 'history' && (
-                    <HistoryPanel 
-                      history={history}
-                      onLoadItem={loadHistoryItem}
-                      onClearHistory={clearHistory}
-                    />
-                )}
-              </div>
-            </div>
-          </main>
-        )}
-        
-        {activeMainView === 'auditor' && (
-          <main className="mt-10 animate-fade-in">
-            <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16">
-               <div className="flex flex-col">
+                  
                   <TextInput
-                    id="audit_brand_voice_input"
-                    label="1. Define Your Brand Voice"
-                    placeholder="e.g., Our voice is simple, clean, and elegant. We use minimal words to make a big impact."
-                    value={auditBrandVoice}
-                    onChange={(e) => setAuditBrandVoice(e.target.value)}
-                    rows={6}
-                    disabled={isAuditing}
+                      id="brand_voice_input"
+                      label="1. Define Your Personal Voice"
+                      placeholder="e.g., Casual but authoritative. I use short sentences. I hate jargon. I sound like a smart friend giving advice."
+                      value={brandVoice}
+                      onChange={(e) => setBrandVoice(e.target.value)}
+                      rows={6}
+                      disabled={isGenerating || isAnalyzing}
                   />
-                  <div className="mt-10">
-                    <TextInput
-                      id="content_to_audit_input"
-                      label="2. Paste Your Content to Audit"
-                      placeholder="Paste the content you want to check against your brand voice here."
-                      value={contentToAudit}
-                      onChange={(e) => setContentToAudit(e.target.value)}
-                      rows={10}
-                      disabled={isAuditing}
-                    />
-                  </div>
-                  <div className="mt-12">
+                  
+                  <ContentTemplates onTemplateSelect={handleTemplateSelect} disabled={isGenerating} />
+                  
+                  <TextInput
+                      id="content_request_input"
+                      label="3. What are we writing today?"
+                      placeholder="e.g., A thread about why most startups fail..."
+                      value={contentRequest}
+                      onChange={(e) => setContentRequest(e.target.value)}
+                      rows={6}
+                      disabled={isGenerating}
+                  />
+                  
+                  <div className="pt-4">
                     <GenerateButton
-                      onClick={handleAudit}
-                      isLoading={isAuditing}
-                      disabled={!auditBrandVoice || !contentToAudit}
+                      onClick={handleGenerate}
+                      isLoading={isGenerating}
+                      disabled={!brandVoice || !contentRequest || isAnalyzing}
                     >
-                      Audit Content
+                      Generate Draft
                     </GenerateButton>
                   </div>
-               </div>
+                </div>
 
-               <div className="mt-12 lg:mt-0">
-                  <OutputDisplay
-                    isLoading={isAuditing}
-                    error={auditError}
-                    content={auditResult}
-                    onRetry={handleAudit}
-                    title="Audit Report"
-                  />
-               </div>
-            </div>
-          </main>
-        )}
+                <div className="flex flex-col h-full min-h-[600px] lg:mt-0 mt-8">
+                  <div className="flex border-b border-slate-700 mb-4">
+                      <button onClick={() => setActiveGeneratorView('output')} className={`flex-1 px-4 py-3 text-lg font-semibold transition-colors duration-200 ${activeGeneratorView === 'output' ? 'text-teal-400 border-b-2 border-teal-400 bg-slate-800/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/10'}`}>
+                        Generated Draft
+                      </button>
+                      <button onClick={() => setActiveGeneratorView('history')} className={`flex-1 px-4 py-3 text-lg font-semibold transition-colors duration-200 ${activeGeneratorView === 'history' ? 'text-teal-400 border-b-2 border-teal-400 bg-slate-800/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/10'}`}>
+                        History
+                      </button>
+                  </div>
+                  <div className="flex-grow relative">
+                      {activeGeneratorView === 'output' && (
+                          <OutputDisplay
+                          isLoading={isGenerating}
+                          error={generatorError}
+                          content={generatedContent}
+                          onRetry={handleGenerate}
+                          title="Draft Content"
+                          />
+                      )}
+                      {activeGeneratorView === 'history' && (
+                          <HistoryPanel 
+                          history={history}
+                          onLoadItem={loadHistoryItem}
+                          onClearHistory={clearHistory}
+                          />
+                      )}
+                  </div>
+                </div>
+              </div>
+            </main>
+          )}
+          
+          {activeMainView === 'auditor' && (
+            <main className="mt-8 animate-fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-12 gap-8">
+                <div className="flex flex-col space-y-8">
+                    <div className="p-6 bg-slate-800/30 border border-slate-700 rounded-lg">
+                        <h3 className="text-xl font-bold text-slate-100 mb-2">Voice Auditor Mode</h3>
+                        <p className="text-slate-400">Paste your draft below. We'll tell you if it sounds like you, or if it sounds like a robot.</p>
+                    </div>
 
-      </div>
+                    <TextInput
+                      id="audit_brand_voice_input"
+                      label="1. Define Your Voice"
+                      placeholder="e.g., 'Direct, no fluff, contrarian. I use simple words and avoid emojis.'"
+                      value={auditBrandVoice}
+                      onChange={(e) => setAuditBrandVoice(e.target.value)}
+                      rows={6}
+                      disabled={isAuditing}
+                    />
+                    
+                    <TextInput
+                        id="content_to_audit_input"
+                        label="2. Paste Your Draft"
+                        placeholder="Paste the LinkedIn post or Tweet you want to check..."
+                        value={contentToAudit}
+                        onChange={(e) => setContentToAudit(e.target.value)}
+                        rows={10}
+                        disabled={isAuditing}
+                      />
+                    
+                    <div className="pt-4">
+                      <GenerateButton
+                        onClick={handleAudit}
+                        isLoading={isAuditing}
+                        disabled={!auditBrandVoice || !contentToAudit}
+                      >
+                        Audit Content
+                      </GenerateButton>
+                    </div>
+                </div>
+
+                <div className="lg:mt-0 mt-8 h-full min-h-[600px]">
+                    <OutputDisplay
+                      isLoading={isAuditing}
+                      error={auditError}
+                      content={auditResult}
+                      onRetry={handleAudit}
+                      title="Audit Report"
+                    />
+                </div>
+              </div>
+            </main>
+          )}
+        </div>
+      )}
     </div>
   );
 };
