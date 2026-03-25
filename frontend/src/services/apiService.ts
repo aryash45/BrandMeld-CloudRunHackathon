@@ -21,10 +21,10 @@ interface AuditContentRequest {
 export type Platform = 'twitter' | 'linkedin' | 'instagram' | 'newsletter';
 
 export const PLATFORM_META: Record<Platform, { label: string; icon: string; color: string }> = {
-  twitter:     { label: 'X Thread',    icon: '𝕏',  color: 'text-slate-200' },
-  linkedin:    { label: 'LinkedIn',    icon: 'in', color: 'text-blue-400' },
-  instagram:   { label: 'Instagram',  icon: '◈',  color: 'text-pink-400' },
-  newsletter:  { label: 'Newsletter', icon: '✉',  color: 'text-teal-400' },
+  twitter: { label: 'X Thread', icon: '𝕏', color: 'text-slate-200' },
+  linkedin: { label: 'LinkedIn', icon: 'in', color: 'text-blue-400' },
+  instagram: { label: 'Instagram', icon: '◈', color: 'text-pink-400' },
+  newsletter: { label: 'Newsletter', icon: '✉', color: 'text-teal-400' },
 };
 
 interface BatchGenerationRequest {
@@ -151,6 +151,7 @@ export const fetchBrandDNA = async (companyIdentifier: string): Promise<BrandDNA
   }
 };
 
+export const analyzeBrandVoice = async (companyIdentifier: string): Promise<string> => {
   try {
     const response = await fetch(`${API_BASE_URL}/v1/discovery?url=${encodeURIComponent(companyIdentifier)}`, {
       method: 'POST',
@@ -161,7 +162,6 @@ export const fetchBrandDNA = async (companyIdentifier: string): Promise<BrandDNA
       throw new Error(error.detail || 'Failed to analyze brand voice');
     }
     const data = await response.json();
-    // Return voice_profile string from the saved DNA
     const dna = data.data;
     if (dna && dna.voice_profile) return dna.voice_profile;
     if (dna && dna.brand_voice) return dna.brand_voice;
@@ -171,9 +171,6 @@ export const fetchBrandDNA = async (companyIdentifier: string): Promise<BrandDNA
   }
 };
 
-/**
- * Audit content against brand voice using backend API
- */
 export const auditContent = async (brandVoice: string, contentToAudit: string): Promise<string> => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auditor/audit`, {
@@ -214,6 +211,10 @@ export const generateImage = async (brandColors: string[], contentSummary: strin
   }
 };
 
+/**
+ * Health check for backend API
+ */
+export const checkBackendHealth = async (): Promise<boolean> => {
   try {
     const response = await fetch(`${API_BASE_URL}/health`);
     return response.ok;
