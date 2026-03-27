@@ -14,55 +14,76 @@ interface HistoryPanelProps {
 }
 
 const HistoryPanel: React.FC<HistoryPanelProps> = ({ history, onLoadItem, onClearHistory }) => {
-  const containerClasses = `
-    h-full w-full bg-slate-800/50 border-2 border-slate-700/80 rounded-lg p-6 relative shadow-2xl shadow-slate-900/50 
-    transition-all duration-300 ease-in-out
-  `;
-
   if (history.length === 0) {
     return (
-      <div className={containerClasses.trim()}>
-        <div className="flex flex-col items-center justify-center h-full text-center text-slate-500" style={{minHeight: '22rem'}}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="font-semibold text-lg">No history yet</p>
-          <p className="text-sm mt-1">Your generated content will appear here.</p>
-        </div>
+      <div className="neon-panel flex min-h-[420px] flex-col items-center justify-center px-6 py-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" className="mb-4 h-14 w-14 text-slate-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p className="font-display text-2xl font-semibold text-slate-200">No sessions saved yet</p>
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
+          Generated drafts will collect here so you can reload a previous voice profile and prompt.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className={containerClasses.trim()}>
-        <div className="absolute top-4 right-4">
+    <div className="neon-panel flex min-h-[420px] flex-col px-5 py-5 sm:px-6 sm:py-6">
+      <div className="flex flex-col gap-4 border-b border-white/5 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="neon-kicker">Session Archive</p>
+          <h3 className="mt-3 font-display text-2xl font-semibold text-white">Recent history</h3>
+        </div>
+        <button
+          onClick={onClearHistory}
+          className="neon-danger-button rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]"
+        >
+          Clear History
+        </button>
+      </div>
+
+      <div className="neon-scroll mt-5 flex-1 space-y-4 overflow-y-auto pr-2">
+        {history.map((item) => (
+          <div
+            key={item.id}
+            className="neon-panel-soft rounded-[22px] px-4 py-4 sm:px-5"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-cyan-400/12 bg-cyan-400/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                {new Date(item.id).toLocaleDateString()}
+              </span>
+            </div>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Voice
+            </p>
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-300">
+              {item.brandVoice}
+            </p>
+
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Request
+            </p>
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-300">
+              {item.contentRequest}
+            </p>
+
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Preview
+            </p>
+            <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-400">
+              {item.generatedContent.replace(/<\/?[^>]+(>|$)/g, ' ')}
+            </p>
+
             <button
-                onClick={onClearHistory}
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-600/20 text-red-400 text-xs font-medium rounded-md hover:bg-red-600/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-red-500 transition-all duration-200"
+              onClick={() => onLoadItem(item)}
+              className="neon-ghost-button mt-5 rounded-full px-4 py-2 text-sm font-semibold"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Clear History
+              Load session
             </button>
-        </div>
-        <div className="space-y-4 h-full overflow-y-auto" style={{minHeight: '22rem'}}>
-            {history.map(item => (
-                <div key={item.id} className="p-4 bg-slate-900/50 rounded-lg border border-slate-700/60 hover:border-teal-500/50 transition-colors duration-200">
-                    <p className="text-sm text-slate-400 font-medium line-clamp-1"><strong>Voice:</strong> {item.brandVoice}</p>
-                    <p className="text-sm text-slate-400 font-medium mt-1 line-clamp-1"><strong>Request:</strong> {item.contentRequest}</p>
-                    <div className="mt-3 pt-3 border-t border-slate-700/60">
-                         <p className="text-slate-300 text-sm line-clamp-2" dangerouslySetInnerHTML={{ __html: item.generatedContent.replace(/<\/?[^>]+(>|$)/g, " ") }}></p>
-                    </div>
-                    <button 
-                        onClick={() => onLoadItem(item)} 
-                        className="text-xs font-semibold text-teal-400 hover:text-teal-300 mt-3"
-                    >
-                        Load this session →
-                    </button>
-                </div>
-            ))}
-        </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

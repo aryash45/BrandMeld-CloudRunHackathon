@@ -13,8 +13,8 @@ interface TextInputProps {
 
 const TextInput: React.FC<TextInputProps> = ({ id, label, value, onChange, placeholder, rows = 5, disabled = false }) => {
   return (
-    <div className="w-full">
-      <label htmlFor={id} className="block text-lg font-semibold mb-3 text-slate-300">
+    <div className="w-full space-y-3">
+      <label htmlFor={id} className="block font-display text-xl font-semibold tracking-tight text-white">
         {label}
       </label>
       <textarea
@@ -24,7 +24,7 @@ const TextInput: React.FC<TextInputProps> = ({ id, label, value, onChange, place
         placeholder={placeholder}
         rows={rows}
         disabled={disabled}
-        className="w-full p-4 bg-slate-800 border-2 border-slate-700 rounded-lg text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed resize-y"
+        className="neon-input neon-scroll resize-y px-5 py-4 text-[15px] leading-relaxed disabled:cursor-not-allowed disabled:opacity-50"
       />
     </div>
   );

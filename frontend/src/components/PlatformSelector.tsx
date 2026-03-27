@@ -12,7 +12,6 @@ const ALL_PLATFORMS = Object.keys(PLATFORM_META) as Platform[];
 const PlatformSelector: React.FC<PlatformSelectorProps> = ({ selectedPlatforms, onChange, disabled }) => {
   const toggle = (platform: Platform) => {
     if (selectedPlatforms.includes(platform)) {
-      // Don't deselect if it's the last one
       if (selectedPlatforms.length === 1) return;
       onChange(selectedPlatforms.filter((p) => p !== platform));
     } else {
@@ -21,10 +20,14 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({ selectedPlatforms, 
   };
 
   return (
-    <div>
-      <label className="block text-sm font-semibold text-slate-400 uppercase tracking-widest mb-3">
-        2. Publish To
+    <div className="space-y-3">
+      <label className="block font-display text-xl font-semibold tracking-tight text-white">
+        Distribution Mix
       </label>
+      <p className="text-sm leading-relaxed text-slate-400">
+        Arm one or more channels and BrandMeld will tailor the same core idea for each
+        destination.
+      </p>
       <div className="flex flex-wrap gap-2">
         {ALL_PLATFORMS.map((platform) => {
           const meta = PLATFORM_META[platform];
@@ -37,27 +40,27 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({ selectedPlatforms, 
               disabled={disabled}
               aria-pressed={isSelected}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold
+                neon-chip flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm font-semibold
                 transition-all duration-200 select-none
                 ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
                 ${isSelected
-                  ? 'bg-teal-500/20 border-teal-500/60 text-teal-300 shadow-sm shadow-teal-900/30'
-                  : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'}
+                  ? 'is-active'
+                  : ''}
               `}
             >
-              <span className={`font-bold text-base leading-none ${isSelected ? meta.color : ''}`}>
+              <span className={`flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-950/40 font-display text-xs font-bold uppercase leading-none ${isSelected ? meta.color : 'text-slate-400'}`}>
                 {meta.icon}
               </span>
               <span>{meta.label}</span>
               {isSelected && (
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                <span className="status-orb h-2 w-2" />
               )}
             </button>
           );
         })}
       </div>
       {selectedPlatforms.length > 1 && (
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="rounded-2xl border border-cyan-400/10 bg-cyan-400/5 px-4 py-3 text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
           Generating {selectedPlatforms.length} tailored versions simultaneously.
         </p>
       )}

@@ -13,17 +13,24 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageDataUrl }) => {
   };
 
   return (
-    <div className="mt-4 p-4 border border-slate-700 rounded-lg bg-slate-800/30">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-semibold text-teal-300">Generated Image</h3>
+    <div className="neon-panel-soft px-4 py-4 sm:px-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Generated image
+          </p>
+          <h3 className="mt-2 font-display text-xl font-semibold text-white">Visual preview</h3>
+        </div>
         <button
           onClick={downloadImage}
-          className="text-xs text-slate-400 hover:text-teal-400"
+          className="neon-ghost-button rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em]"
         >
           Download
         </button>
       </div>
-      <img src={imageDataUrl} alt="Generated brand image" className="max-w-full h-auto rounded" />
+      <div className="overflow-hidden rounded-[22px] border border-white/5 bg-slate-950/40 p-2">
+        <img src={imageDataUrl} alt="Generated brand image" className="h-auto w-full rounded-[18px]" />
+      </div>
     </div>
   );
 };

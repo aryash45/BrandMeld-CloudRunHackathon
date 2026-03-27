@@ -1,0 +1,20 @@
+# BrandMeld Backend Dependencies
+
+# Web Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+
+# Google Cloud & AI
+google-generativeai==0.8.3
+google-genai>=1.0.0
+google-cloud-firestore==2.21.0
+
+# Database
+supabase>=2.0.0
+
+# Web Automation
+playwright>=1.40.0
+
+# Utilities
+python-dotenv==1.0.1

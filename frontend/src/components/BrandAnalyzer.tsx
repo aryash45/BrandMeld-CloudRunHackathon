@@ -11,11 +11,15 @@ interface BrandAnalyzerProps {
 
 const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({ value, onChange, onAnalyze, disabled, isAnalyzing }) => {
   return (
-    <div className="w-full pb-8 border-b border-slate-700/50">
-      <label htmlFor="brand_analyzer_input" className="block text-lg font-semibold mb-3 text-slate-300">
-        Let us analyze your brand
+    <div className="w-full">
+      <label htmlFor="brand_analyzer_input" className="block font-display text-xl font-semibold tracking-tight text-white">
+        Brand Signal Scan
       </label>
-      <div className="flex items-center gap-3">
+      <p className="mt-2 text-sm leading-relaxed text-slate-400">
+        Enter a site or company name and we&apos;ll extract voice cues, palette hints, and
+        messaging guardrails.
+      </p>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
           id="brand_analyzer_input"
           type="text"
@@ -23,14 +27,14 @@ const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({ value, onChange, onAnalyz
           onChange={onChange}
           placeholder="e.g., nike.com or Coca-Cola"
           disabled={disabled || isAnalyzing}
-          className="flex-grow p-4 bg-slate-800 border-2 border-slate-700 rounded-lg text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+          className="neon-input min-w-0 flex-1 px-5 py-4 text-sm disabled:cursor-not-allowed disabled:opacity-50"
           onKeyDown={(e) => { if (e.key === 'Enter') onAnalyze(); }}
         />
         <button
           type="button"
           onClick={onAnalyze}
           disabled={disabled || isAnalyzing || !value}
-          className="w-32 flex items-center justify-center px-6 py-4 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-teal-500 transition-all duration-200 disabled:bg-slate-600 disabled:cursor-not-allowed"
+          className="neon-ghost-button flex w-full items-center justify-center rounded-[18px] px-6 py-4 text-sm font-semibold sm:w-36"
         >
           {isAnalyzing ? (
             <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

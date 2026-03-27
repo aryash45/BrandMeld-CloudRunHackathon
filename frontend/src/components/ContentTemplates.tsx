@@ -29,16 +29,19 @@ const BlogIcon = () => (
   </svg>
 );
 
-
-const TemplateButton: React.FC<{onClick: () => void, disabled?: boolean, children: React.ReactNode, icon: React.ReactNode}> = ({onClick, disabled, children, icon}) => (
+const TemplateButton: React.FC<{ onClick: () => void; disabled?: boolean; children: React.ReactNode; icon: React.ReactNode }> = ({ onClick, disabled, children, icon }) => (
   <button
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-700 hover:border-teal-500/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-teal-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+    className="neon-chip group flex items-center gap-3 rounded-[18px] px-4 py-3 text-left text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
   >
-    {icon}
-    {children}
+    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/40 text-slate-300 transition-colors group-hover:text-white">
+      {icon}
+    </span>
+    <span className="leading-relaxed text-slate-300 transition-colors group-hover:text-white">
+      {children}
+    </span>
   </button>
 );
 
@@ -52,10 +55,13 @@ const ContentTemplates: React.FC<ContentTemplatesProps> = ({ onTemplateSelect, d
   };
 
   return (
-    <div className="w-full">
-      <label className="block text-lg font-semibold mb-3 text-slate-300">
-        2. Select a Personal Brand Template
+    <div className="w-full space-y-3">
+      <label className="block font-display text-xl font-semibold tracking-tight text-white">
+        Fast-Start Prompts
       </label>
+      <p className="text-sm leading-relaxed text-slate-400">
+        Seed the brief with a proven structure, then fine-tune the angle in your own words.
+      </p>
       <div className="flex flex-wrap gap-3">
         <TemplateButton onClick={() => onTemplateSelect(templates.tweet)} disabled={disabled} icon={<TwitterIcon />}>
           Viral Thread

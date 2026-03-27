@@ -1,7 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
-
-declare const marked: any;
+import React, { useEffect, useState } from 'react';
 
 interface OutputDisplayProps {
   isLoading: boolean;
@@ -13,11 +10,11 @@ interface OutputDisplayProps {
 
 const LoadingSkeleton: React.FC = () => (
   <div className="space-y-4 animate-pulse">
-    <div className="h-4 bg-slate-700 rounded w-3/4"></div>
-    <div className="h-4 bg-slate-700 rounded"></div>
-    <div className="h-4 bg-slate-700 rounded"></div>
-    <div className="h-4 bg-slate-700 rounded w-5/6"></div>
-    <div className="h-4 bg-slate-700 rounded w-1/2"></div>
+    <div className="h-4 w-3/4 rounded-full bg-slate-700/50" />
+    <div className="h-4 rounded-full bg-slate-700/50" />
+    <div className="h-4 rounded-full bg-slate-700/50" />
+    <div className="h-4 w-5/6 rounded-full bg-slate-700/50" />
+    <div className="h-4 w-1/2 rounded-full bg-slate-700/50" />
   </div>
 );
 
@@ -30,86 +27,91 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
   };
 
   useEffect(() => {
-    if (isCopied) {
-      const timer = setTimeout(() => setIsCopied(false), 2000);
-      return () => clearTimeout(timer);
-    }
+    if (!isCopied) return;
+    const timer = setTimeout(() => setIsCopied(false), 2000);
+    return () => clearTimeout(timer);
   }, [isCopied]);
 
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-4 right-4 p-2 bg-slate-700/80 rounded-lg text-slate-400 hover:text-teal-400 hover:bg-slate-700 transition-all duration-200"
+      className="neon-ghost-button rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em]"
       aria-label="Copy to clipboard"
     >
-      {isCopied ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-      )}
+      {isCopied ? 'Copied' : 'Copy'}
     </button>
   );
 };
 
-
-const OutputDisplay: React.FC<OutputDisplayProps> = ({ isLoading, error, content, onRetry, title = "Generated Content" }) => {
-  const renderedHtml = content ? marked.parse(content) : '';
-
-  const containerClasses = `
-    h-full w-full bg-slate-800/50 border-2 rounded-lg p-6 relative shadow-2xl shadow-slate-900/50 
-    transition-all duration-300 ease-in-out
-    ${isLoading 
-      ? 'border-teal-500/60 ring-2 ring-teal-500/20' 
-      : 'border-slate-700/80'
-    }
-  `;
+const OutputDisplay: React.FC<OutputDisplayProps> = ({
+  isLoading,
+  error,
+  content,
+  onRetry,
+  title = 'Generated Content',
+}) => {
+  const statusLabel = isLoading ? 'Running' : error ? 'Attention' : content ? 'Ready' : 'Waiting';
 
   return (
-    <div className={containerClasses.trim()}>
-      <div className="absolute top-0 left-6 -translate-y-1/2 bg-gray-900 px-2 text-lg font-semibold text-slate-300">
-        {title}
+    <div className="neon-panel flex h-full min-h-[420px] w-full flex-col px-5 py-5 sm:px-6 sm:py-6">
+      <div className="flex flex-col gap-4 border-b border-white/5 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="neon-kicker">{title === 'Audit Report' ? 'Audit Engine' : 'Output Feed'}</p>
+          <h3 className="mt-3 font-display text-2xl font-semibold text-white">{title}</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-cyan-400/10 bg-cyan-400/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+            {statusLabel}
+          </span>
+          {content && !isLoading && <CopyButton text={content} />}
+        </div>
       </div>
-       {content && !isLoading && <CopyButton text={content} />}
-      <div className="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-slate-100 h-full overflow-y-auto prose-strong:text-slate-200 prose-a:text-teal-400 prose-ul:list-disc prose-ol:list-decimal" style={{minHeight: '22rem'}}>
+
+      <div className="neon-scroll flex-1 overflow-y-auto pt-5 text-slate-300">
         {isLoading && (
           <div className="animate-fade-in">
             <LoadingSkeleton />
           </div>
         )}
+
         {error && !isLoading && (
-          <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="flex h-full flex-col items-center justify-center text-center animate-fade-in">
+            <svg xmlns="http://www.w3.org/2000/svg" className="mb-4 h-12 w-12 text-rose-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-red-400 font-semibold text-lg">Oops! Something went wrong.</p>
-            <p className="text-slate-400 mt-1 max-w-md">{error}</p>
+            <p className="font-display text-2xl font-semibold text-rose-200">
+              The audit hit a snag
+            </p>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-400">{error}</p>
             <button
-                onClick={onRetry}
-                disabled={isLoading}
-                className="mt-6 flex items-center justify-center px-5 py-2 bg-teal-600 text-white font-semibold text-sm rounded-lg shadow-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-teal-500 transition-all duration-200 disabled:opacity-50"
+              onClick={onRetry}
+              disabled={isLoading}
+              className="neon-ghost-button mt-6 rounded-full px-5 py-3 text-sm font-semibold"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5M20 20v-5h-5M20 4h-5v5M4 20h5v-5" />
-                </svg>
-                Try Again
+              Try Again
             </button>
           </div>
         )}
+
         {!isLoading && !error && !content && (
-           <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 animate-fade-in">
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+          <div className="flex h-full flex-col items-center justify-center text-center text-slate-500 animate-fade-in">
+            <svg xmlns="http://www.w3.org/2000/svg" className="mb-4 h-16 w-16 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 6h16M4 12h16M4 18h7" />
             </svg>
-             <p className="font-semibold text-lg">
-                {title === 'Audit Report' ? 'Your audit report will be shown here' : 'Your generated content will appear here'}
-             </p>
-           </div>
+            <p className="font-display text-2xl font-semibold text-slate-300">
+              {title === 'Audit Report' ? 'Your alignment report will appear here' : 'Generated content will appear here'}
+            </p>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-500">
+              Start the workflow on the left to populate this panel.
+            </p>
+          </div>
         )}
-        {!isLoading && content && <div className="animate-fade-in" dangerouslySetInnerHTML={{ __html: renderedHtml }} />}
+
+        {!isLoading && content && (
+          <div className="animate-fade-in whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-200">
+            {content}
+          </div>
+        )}
       </div>
     </div>
   );

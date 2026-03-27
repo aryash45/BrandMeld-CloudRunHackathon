@@ -11,16 +11,16 @@ interface EditToolbarProps {
 }
 
 const EDIT_BUTTONS: { command: EditCommand; label: string; description: string }[] = [
-  { command: 'shorter',  label: '✂ Shorter',    description: 'Cut to the essential' },
-  { command: 'longer',   label: '↕ Expand',     description: 'Add more depth' },
-  { command: 'casual',   label: '💬 Casual',    description: 'Sound more human' },
-  { command: 'formal',   label: '🎩 Formal',    description: 'More polished tone' },
-  { command: 'hook',     label: '🎣 Add Hook',  description: 'Rewrite the opening' },
-  { command: 'punchy',   label: '⚡ Punchier',  description: 'Shorter, stronger sentences' },
+  { command: 'shorter', label: 'Shorter', description: 'Cut to the essential' },
+  { command: 'longer', label: 'Expand', description: 'Add more depth' },
+  { command: 'casual', label: 'Casual', description: 'Sound more human' },
+  { command: 'formal', label: 'Formal', description: 'Sharpen the polish' },
+  { command: 'hook', label: 'Add Hook', description: 'Rewrite the opening' },
+  { command: 'punchy', label: 'Punchier', description: 'Tighten the cadence' },
 ];
 
 const Spinner: React.FC = () => (
-  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
   </svg>
@@ -35,21 +35,27 @@ const EditToolbar: React.FC<EditToolbarProps> = ({
   disabled,
 }) => {
   return (
-    <div className="mt-4 pt-4 border-t border-slate-700/50">
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Refine Draft</span>
+    <div className="neon-panel-soft px-5 py-5">
+      <div className="flex flex-col gap-3 border-b border-white/5 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="neon-kicker">Refine Draft</p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">
+            Apply quick tonal edits without losing the original prompt context.
+          </p>
+        </div>
         {canUndo && (
           <button
             onClick={onUndo}
             disabled={isEditing}
-            className="text-xs text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1"
+            className="neon-ghost-button rounded-full px-4 py-2 text-sm font-semibold"
           >
-            ↩ Undo
+            Undo
           </button>
         )}
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {EDIT_BUTTONS.map(({ command, label }) => {
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {EDIT_BUTTONS.map(({ command, label, description }) => {
           const isActive = isEditing && activeCommand === command;
           const isOtherLoading = isEditing && activeCommand !== command;
           return (
@@ -57,17 +63,10 @@ const EditToolbar: React.FC<EditToolbarProps> = ({
               key={command}
               onClick={() => onEdit(command)}
               disabled={disabled || isEditing}
-              title={EDIT_BUTTONS.find((b) => b.command === command)?.description}
-              className={`
-                flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border
-                transition-all duration-150
-                ${isActive
-                  ? 'bg-teal-500/25 border-teal-500/50 text-teal-300'
-                  : isOtherLoading || disabled
-                    ? 'opacity-40 cursor-not-allowed bg-slate-800/30 border-slate-700 text-slate-500'
-                    : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-100 hover:bg-slate-700/50 cursor-pointer'
-                }
-              `}
+              title={description}
+              className={`neon-chip flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
+                isActive ? 'is-active' : ''
+              } ${isOtherLoading || disabled ? 'cursor-not-allowed opacity-40' : ''}`}
             >
               {isActive && <Spinner />}
               {label}

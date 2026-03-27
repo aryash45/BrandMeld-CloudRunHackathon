@@ -6,6 +6,14 @@ import google.generativeai as genai
 
 router = APIRouter()
 
+def _create_model() -> genai.GenerativeModel:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY environment variable not set")
+
+    genai.configure(api_key=api_key)
+    return genai.GenerativeModel('gemini-2.0-flash-exp')
+
 class ImagenRequest(BaseModel):
     brand_colors: list[str]
     content_summary: str
@@ -20,7 +28,7 @@ async def generate_image(request: ImagenRequest):
         # Build a simple prompt describing the image
         colors = ', '.join(request.brand_colors)
         prompt = f"Create a minimalist social media card for {request.platform}. Use background color {colors}. Include the summary: '{request.content_summary}'. Aspect ratio suitable for {request.platform}. Return a PNG image."
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = _create_model()
         response = model.generate_content(
             prompt,
             generation_config=genai.GenerationConfig(
@@ -31,6 +39,9 @@ async def generate_image(request: ImagenRequest):
         image_part = response.candidates[0].content.parts[0]
         # The part may have 'blob' attribute with raw bytes
         image_bytes = getattr(image_part, 'blob', None)
+        if image_bytes is None:
+            inline_data = getattr(image_part, 'inline_data', None)
+            image_bytes = getattr(inline_data, 'data', None) if inline_data else None
         if not image_bytes:
             raise ValueError('No image data returned from Gemini')
         image_base64 = base64.b64encode(image_bytes).decode()

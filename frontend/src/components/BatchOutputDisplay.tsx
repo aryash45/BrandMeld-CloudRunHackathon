@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Platform, PLATFORM_META } from '../services/apiService';
-import ReactMarkdown from 'react-markdown';
 
 interface BatchOutputDisplayProps {
   isLoading: boolean;
   error: string | null;
   results: Partial<Record<Platform, string>>;
   selectedPlatforms: Platform[];
+  activeTab: Platform | null;
+  onTabChange: (platform: Platform) => void;
   onRetry: () => void;
 }
 
 const CopyIcon: React.FC<{ copied: boolean }> = ({ copied }) =>
   copied ? (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-teal-400" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-cyan-300" viewBox="0 0 20 20" fill="currentColor">
+      <path
+        fillRule="evenodd"
+        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+        clipRule="evenodd"
+      />
     </svg>
   ) : (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -24,14 +29,18 @@ const CopyIcon: React.FC<{ copied: boolean }> = ({ copied }) =>
 
 const Skeleton: React.FC = () => (
   <div className="space-y-3 animate-pulse pt-2">
-    {[80, 60, 90, 50, 70].map((w, i) => (
-      <div key={i} className="h-4 rounded-full bg-slate-700/60" style={{ width: `${w}%` }} />
+    {[82, 64, 90, 58, 76, 72].map((width, index) => (
+      <div
+        key={index}
+        className="h-4 rounded-full bg-slate-700/50"
+        style={{ width: `${width}%` }}
+      />
     ))}
   </div>
 );
 
 const PlatformContent: React.FC<{ content: string }> = ({ content }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = React.useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content).then(() => {
@@ -40,23 +49,29 @@ const PlatformContent: React.FC<{ content: string }> = ({ content }) => {
     });
   };
 
-  const charCount = content.length;
-
   return (
-    <div className="relative h-full">
-      <button
-        onClick={handleCopy}
-        title="Copy to clipboard"
-        className="absolute top-0 right-0 flex items-center gap-1.5 text-xs text-slate-400 hover:text-teal-400 transition-colors px-2 py-1 rounded-md hover:bg-slate-700/50"
-      >
-        <CopyIcon copied={copied} />
-        {copied ? 'Copied!' : 'Copy'}
-      </button>
-      <div className="prose prose-invert prose-sm max-w-none pr-16 overflow-y-auto max-h-[55vh] leading-relaxed">
-        <ReactMarkdown>{content}</ReactMarkdown>
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+          Draft body
+        </p>
+        <button
+          onClick={handleCopy}
+          title="Copy to clipboard"
+          className="neon-ghost-button flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold"
+        >
+          <CopyIcon copied={copied} />
+          {copied ? 'Copied' : 'Copy'}
+        </button>
       </div>
-      <div className="mt-4 pt-3 border-t border-slate-700/50 text-xs text-slate-500 text-right">
-        {charCount.toLocaleString()} characters
+
+      <div className="neon-scroll mt-4 flex-1 overflow-y-auto pr-2 text-sm leading-relaxed text-slate-200 whitespace-pre-wrap break-words">
+        {content}
+      </div>
+
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/5 pt-4 text-xs text-slate-500">
+        <span>Live draft stream</span>
+        <span>{content.length.toLocaleString()} characters</span>
       </div>
     </div>
   );
@@ -67,92 +82,100 @@ const BatchOutputDisplay: React.FC<BatchOutputDisplayProps> = ({
   error,
   results,
   selectedPlatforms,
+  activeTab,
+  onTabChange,
   onRetry,
 }) => {
-  const availablePlatforms = selectedPlatforms.filter((p) => results[p]);
-  const [activeTab, setActiveTab] = useState<Platform | null>(null);
-
-  // Auto-switch to first available tab when results arrive
-  const effectiveTab: Platform | null =
-    activeTab && availablePlatforms.includes(activeTab)
-      ? activeTab
-      : availablePlatforms[0] ?? null;
-
+  const availablePlatforms = selectedPlatforms.filter((platform) => results[platform]);
+  const effectiveTab =
+    activeTab && availablePlatforms.includes(activeTab) ? activeTab : availablePlatforms[0] ?? null;
   const hasContent = availablePlatforms.length > 0;
 
   return (
-    <div className="h-full flex flex-col bg-slate-800/30 border border-slate-700/50 rounded-xl p-6">
-      {/* Empty / loading state */}
-      {!hasContent && !error && (
-        <div className="flex-1 flex flex-col">
-          {isLoading ? (
-            <div>
-              <div className="flex gap-2 mb-6">
-                {selectedPlatforms.map((p) => (
-                  <div key={p} className="h-8 w-24 rounded-lg bg-slate-700/60 animate-pulse" />
-                ))}
-              </div>
-              <Skeleton />
-              <p className="mt-6 text-xs text-slate-500 animate-pulse">
-                Generating {selectedPlatforms.length} version{selectedPlatforms.length > 1 ? 's' : ''} simultaneously…
-              </p>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-4 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-              </svg>
-              <p className="text-sm">Select platforms and generate to see your drafts</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Error state */}
-      {error && !isLoading && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <p className="text-red-400 text-sm mb-3">{error}</p>
-          <button onClick={onRetry} className="text-teal-400 text-sm hover:underline">Try again</button>
-        </div>
-      )}
-
-      {/* Tabbed results */}
-      {hasContent && (
-        <div className="flex flex-col flex-1">
-          {/* Tab bar */}
-          <div className="flex gap-1 mb-5 border-b border-slate-700/60 pb-0">
-            {availablePlatforms.map((platform) => {
-              const meta = PLATFORM_META[platform];
-              const isActive = platform === effectiveTab;
-              return (
-                <button
-                  key={platform}
-                  onClick={() => setActiveTab(platform)}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-t-md border-b-2 transition-all duration-150 -mb-px
-                    ${isActive
-                      ? `border-teal-400 text-teal-300 bg-slate-700/30`
-                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-700/20'
-                    }`}
-                >
-                  <span className={isActive ? meta.color : ''}>{meta.icon}</span>
-                  {meta.label}
-                </button>
-              );
-            })}
-            {/* Still loading remaining tabs */}
-            {isLoading && selectedPlatforms
-              .filter((p) => !results[p])
-              .map((p) => (
-                <div key={p} className="px-4 py-2 text-sm text-slate-600 animate-pulse">{PLATFORM_META[p].label}…</div>
-              ))}
+    <div className="neon-panel flex min-h-[420px] flex-col px-5 py-5 sm:px-6 sm:py-6">
+      <div className="flex flex-col gap-4 border-b border-white/5 pb-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="neon-kicker">Draft Matrix</p>
+            <h3 className="mt-3 font-display text-2xl font-semibold text-white">
+              Multi-platform output
+            </h3>
           </div>
-
-          {/* Active tab content */}
-          {effectiveTab && results[effectiveTab] && (
-            <PlatformContent key={effectiveTab} content={results[effectiveTab]!} />
-          )}
+          <div className="rounded-full border border-cyan-400/10 bg-cyan-400/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+            {availablePlatforms.length || selectedPlatforms.length} channel
+            {((availablePlatforms.length || selectedPlatforms.length) === 1) ? '' : 's'}
+          </div>
         </div>
-      )}
+
+        <div className="flex flex-wrap gap-2">
+          {selectedPlatforms.map((platform) => {
+            const meta = PLATFORM_META[platform];
+            const isActive = platform === effectiveTab && Boolean(results[platform]);
+            const isReady = Boolean(results[platform]);
+            return (
+              <button
+                key={platform}
+                onClick={() => isReady && onTabChange(platform)}
+                disabled={!isReady}
+                className={`neon-tab neon-chip flex items-center gap-3 rounded-full px-4 py-2 text-sm font-semibold ${isActive ? 'is-active' : ''} ${!isReady ? 'cursor-wait opacity-60' : ''}`}
+              >
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-950/40 font-display text-xs font-bold uppercase ${isReady ? meta.color : 'text-slate-500'}`}>
+                  {meta.icon}
+                </span>
+                <span>{meta.label}</span>
+                {!isReady && isLoading && <span className="text-slate-500">...</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col pt-5">
+        {!hasContent && !error && (
+          <div className="flex flex-1 flex-col justify-center">
+            {isLoading ? (
+              <div>
+                <Skeleton />
+                <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
+                  Generating {selectedPlatforms.length} version{selectedPlatforms.length > 1 ? 's' : ''} in parallel...
+                </p>
+              </div>
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center text-center text-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="mb-4 h-12 w-12 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+                <p className="font-display text-xl font-medium text-slate-300">
+                  Queue a prompt to light up this relay.
+                </p>
+                <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
+                  Select the channels you want, generate a draft, and BrandMeld will stream
+                  each version here.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && !isLoading && (
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <p className="font-display text-2xl font-semibold text-rose-300">
+              Draft generation stalled
+            </p>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-400">{error}</p>
+            <button
+              onClick={onRetry}
+              className="neon-ghost-button mt-6 rounded-full px-5 py-3 text-sm font-semibold"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {hasContent && effectiveTab && results[effectiveTab] && (
+          <PlatformContent key={effectiveTab} content={results[effectiveTab]!} />
+        )}
+      </div>
     </div>
   );
 };
